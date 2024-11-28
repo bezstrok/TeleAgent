@@ -9,6 +9,8 @@ try:
 except ImportError:
     Redis = None  # type: ignore[misc,assignment]
 
+__all__ = ["RateLimitMemory"]
+
 
 class RateLimit(abc.ABC):
     def __init__(self, function_name: str, ex_time: int | timedelta, **kwargs: tp.Any) -> None:
