@@ -7,6 +7,7 @@ from telethon.tl import TLObject
 
 __all__ = ["TelethonString"]
 
+
 class TelethonString:
     _encoding = "ascii"
 

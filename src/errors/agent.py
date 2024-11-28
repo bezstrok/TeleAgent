@@ -1,4 +1,7 @@
-__all__ = ["AgentError", "AgentAuthError"]
+__all__ = [
+    "AgentError",
+    "AgentAuthError",
+]
 
 
 class AgentError(Exception):
