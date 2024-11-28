@@ -1,6 +1,6 @@
 [project]
 name = "teleagent"
-version = "0.1.0"
+version = "0.1.3"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -28,3 +28,10 @@ show-fixes = true
 strict = true
 ignore_missing_imports = true
 implicit_optional = true
+
+[tool.uv]
+package = true
+
+[tool.setuptools]
+package-dir = {"teleagent" = "src"}
+packages = ["teleagent"]
