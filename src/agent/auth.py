@@ -1,5 +1,7 @@
 import typing as tp
 
+from ..errors import AgentAuthError
+
 if tp.TYPE_CHECKING:
     from .agent import TelegramAgent
 
@@ -10,4 +12,4 @@ class AuthMixin:
             await self.client.connect()
 
         if not await self.client.is_user_authorized():
-            raise ValueError()
+            raise AgentAuthError("User is not authorized")
