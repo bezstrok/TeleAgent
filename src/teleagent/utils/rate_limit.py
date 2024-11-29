@@ -19,6 +19,8 @@ __all__ = [
     "RateLimitHandler",
 ]
 
+_F = tp.TypeVar("_F", bound=tp.Callable[..., tp.Awaitable[tp.Any]])
+
 
 class RateLimit(abc.ABC):
     def __init__(self, function_name: str, ex_time: int | timedelta, **kwargs: tp.Any) -> None:
@@ -96,15 +98,13 @@ class RateLimitHandler:
         finally:
             await rate_limit.set(self._slug)
 
-    def decorate(
-        self, rate_limit: RateLimit
-    ) -> tp.Callable[[tp.Callable[..., tp.Awaitable[tp.Any]]], tp.Callable[..., tp.Awaitable[tp.Any]]]:
-        def decorator(func: tp.Callable[..., tp.Awaitable[tp.Any]]) -> tp.Callable[..., tp.Awaitable[tp.Any]]:
+    def decorate(self, rate_limit: RateLimit) -> tp.Callable[[_F], _F]:
+        def decorator(func: _F) -> _F:
             @functools.wraps(func)
             async def wrapper(*args: tp.Any, **kwargs: tp.Any) -> tp.Any:
                 async with self.handle(rate_limit):
                     return await func(*args, **kwargs)
 
-            return wrapper
+            return tp.cast(_F, wrapper)
 
         return decorator
