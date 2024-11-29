@@ -1,4 +1,5 @@
 import abc
+import functools
 import math
 import time
 import typing as tp
@@ -15,7 +16,7 @@ except ImportError:
 __all__ = [
     "RateLimitMemory",
     "RateLimitRedis",
-    "AccountRateLimitHandler",
+    "RateLimitHandler",
 ]
 
 
@@ -80,9 +81,9 @@ class RateLimitRedis(RateLimit):
         return f"{self._key_prefix}:{self._function_name}:{slug}"
 
 
-class AccountRateLimitHandler:
-    def __init__(self, account_id: int) -> None:
-        self._slug = str(account_id)
+class RateLimitHandler:
+    def __init__(self, slug: str) -> None:
+        self._slug = slug
 
     @asynccontextmanager
     async def handle(self, rate_limit: RateLimit) -> tp.AsyncGenerator[None, None]:
@@ -94,3 +95,16 @@ class AccountRateLimitHandler:
             yield
         finally:
             await rate_limit.set(self._slug)
+
+    def decorate(
+        self, rate_limit: RateLimit
+    ) -> tp.Callable[[tp.Callable[..., tp.Awaitable[tp.Any]]], tp.Callable[..., tp.Awaitable[tp.Any]]]:
+        def decorator(func: tp.Callable[..., tp.Awaitable[tp.Any]]) -> tp.Callable[..., tp.Awaitable[tp.Any]]:
+            @functools.wraps(func)
+            async def wrapper(*args: tp.Any, **kwargs: tp.Any) -> tp.Any:
+                async with self.handle(rate_limit):
+                    return await func(*args, **kwargs)
+
+            return wrapper
+
+        return decorator
