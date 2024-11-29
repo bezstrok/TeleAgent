@@ -2,14 +2,21 @@ import abc
 import math
 import time
 import typing as tp
+from contextlib import asynccontextmanager
 from datetime import timedelta
+
+from teleagent.utils import delay
 
 try:
     from redis.asyncio import Redis
 except ImportError:
     Redis = None  # type: ignore[misc,assignment]
 
-__all__ = ["RateLimitMemory"]
+__all__ = [
+    "RateLimitMemory",
+    "RateLimitRedis",
+    "AccountRateLimitHandler",
+]
 
 
 class RateLimit(abc.ABC):
@@ -71,3 +78,19 @@ class RateLimitRedis(RateLimit):
 
     def _build_key(self, slug: str) -> str:
         return f"{self._key_prefix}:{self._function_name}:{slug}"
+
+
+class AccountRateLimitHandler:
+    def __init__(self, account_id: int) -> None:
+        self._slug = str(account_id)
+
+    @asynccontextmanager
+    async def handle(self, rate_limit: RateLimit) -> tp.AsyncGenerator[None, None]:
+        seconds = await rate_limit.get_seconds(self._slug)
+        if seconds is not None:
+            await delay(seconds)
+
+        try:
+            yield
+        finally:
+            await rate_limit.set(self._slug)
