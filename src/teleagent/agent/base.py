@@ -14,10 +14,8 @@ class TelegramAgentBase(abc.ABC):
     def __init__(
         self: "TelegramAgent",
         session: sessions.Session,
-        api_id: int,
-        api_hash: str,
+        app: AppData,
         *,
-        app: AppData | None = None,
         proxy: ProxyData | None = None,
         **kwargs: tp.Any,
     ) -> None:
@@ -32,7 +30,7 @@ class TelegramAgentBase(abc.ABC):
 
         telegram_client_kwargs.update(kwargs)
 
-        self._client = TelegramClient(session, api_id, api_hash, **telegram_client_kwargs)
+        self._client = TelegramClient(session, **telegram_client_kwargs)
 
         if app is not None:
             self._client._init_request.lang_pack = app.lang_pack  # noqa
