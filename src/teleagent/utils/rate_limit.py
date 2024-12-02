@@ -1,12 +1,11 @@
 import abc
+import asyncio
 import functools
 import math
 import time
 import typing as tp
 from contextlib import asynccontextmanager
 from datetime import timedelta
-
-from teleagent.utils import delay
 
 try:
     from redis.asyncio import Redis
@@ -23,13 +22,9 @@ _F = tp.TypeVar("_F", bound=tp.Callable[..., tp.Awaitable[tp.Any]])
 
 
 class RateLimit(abc.ABC):
-    def __init__(self, function_name: str, ex_time: int | timedelta, **kwargs: tp.Any) -> None:
+    def __init__(self, function_name: str, ex_time: timedelta) -> None:
         self._function_name = function_name
-
-        if isinstance(ex_time, timedelta):
-            self._ex_time = int(ex_time.total_seconds())
-        else:
-            self._ex_time = ex_time
+        self._ex_time = int(ex_time.total_seconds())
 
     @abc.abstractmethod
     async def set(self, slug: str) -> None:
@@ -41,8 +36,9 @@ class RateLimit(abc.ABC):
 
 
 class RateLimitMemory(RateLimit):
-    def __init__(self, *args: tp.Any, **kwargs: tp.Any) -> None:
-        super().__init__(*args, **kwargs)
+    @tp.override
+    def __init__(self, function_name: str, ex_time: timedelta) -> None:
+        super().__init__(function_name, ex_time)
 
         self._storage: dict[str, float] = {}
 
@@ -67,8 +63,9 @@ class RateLimitMemory(RateLimit):
 class RateLimitRedis(RateLimit):
     _key_prefix: str = "rate_limit"
 
-    def __init__(self, *args: tp.Any, redis_client: Redis, **kwargs: tp.Any) -> None:
-        super().__init__(*args, **kwargs)
+    @tp.override
+    def __init__(self, function_name: str, ex_time: timedelta, *, redis_client: Redis) -> None:
+        super().__init__(function_name, ex_time)
 
         self._redis_client = redis_client
 
@@ -91,7 +88,7 @@ class RateLimitHandler:
     async def handle(self, rate_limit: RateLimit) -> tp.AsyncGenerator[None, None]:
         seconds = await rate_limit.get_seconds(self._slug)
         if seconds is not None:
-            await delay(seconds)
+            await asyncio.sleep(seconds)
 
         try:
             yield
