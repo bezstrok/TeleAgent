@@ -1,6 +1,5 @@
 import typing as tp
-
-from ..errors import AgentAuthError
+from contextlib import asynccontextmanager
 
 if tp.TYPE_CHECKING:
     from .agent import TelegramAgent
@@ -11,5 +10,14 @@ class AuthMixin:
         if not self.client.is_connected():
             await self.client.connect()
 
-        if not await self.client.is_user_authorized():
-            raise AgentAuthError("User is not authorized")
+    async def stop_session(self: "TelegramAgent") -> None:
+        if self.client.is_connected():
+            await self.client.disconnect()
+
+    @asynccontextmanager
+    async def session(self: "TelegramAgent") -> tp.AsyncGenerator[None, None]:
+        await self.start_session()
+        try:
+            yield
+        finally:
+            await self.stop_session()

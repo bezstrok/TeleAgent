@@ -1,10 +1,9 @@
-from . import constants, errors, structures, utils
+from . import constants, types, utils
 from .agent import TelegramAgent
 
 __all__ = [
     "TelegramAgent",
     "constants",
-    "errors",
-    "structures",
+    "types",
     "utils",
 ]

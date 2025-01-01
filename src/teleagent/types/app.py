@@ -1,8 +1,9 @@
-from dataclasses import dataclass
+import typing as tp
+
+__all__ = ["AppType"]
 
 
-@dataclass
-class AppData:
+class AppType(tp.TypedDict):
     api_id: int
     api_hash: str
     device_model: str

@@ -1,8 +1,9 @@
-from dataclasses import dataclass
+import typing as tp
+
+__all__ = ["ProxyType"]
 
 
-@dataclass
-class ProxyData:
+class ProxyType(tp.TypedDict):
     proxy_type: int | str
     addr: str
     port: int
